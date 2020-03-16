@@ -88,11 +88,27 @@ void AMechBase::Tick(float DeltaTime)
 	if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
 	{
 		jumpChargeTime += DeltaTime;
+		if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
+			moveChangeOnce = true;
+		}
 		//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
 	}
 	else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
 	{
 		jumpChargeTime = maxJumpChargeTime;
+	}
+
+
+	if (boost)
+	{
+		LaunchCharacter(GetActorForwardVector() * 100, false, false);
+		boostTimer += DeltaTime;
+		if (boostTimer > maxBoostTime)
+		{
+			BoostOff();
+		}
 	}
 }
 
@@ -108,7 +124,13 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechBase::OnFire);
+
+	//Bind interact event
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMechBase::OnInteract);
+
+	//bind boost button
+	PlayerInputComponent->BindAction("Boost", IE_Pressed, this, &AMechBase::BoostOn);
+	PlayerInputComponent->BindAction("Boost", IE_Released, this, &AMechBase::BoostOff);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMechBase::MoveForward);
@@ -179,7 +201,7 @@ void AMechBase::OnInteract()
 
 void AMechBase::chargeJump()
 {
-	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
+	moveChangeOnce = false;
 	jumpChargeTime = 0;
 	chargingJump = true;
 }

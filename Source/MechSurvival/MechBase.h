@@ -37,10 +37,18 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 
 	bool chargingJump = false;
 	float jumpChargeTime = 0;
+	UPROPERTY(EditDefaultsOnly, Category = jump)
 	float maxJumpChargeTime = 1.0f;
 	float jumpMin = 0;
-	float jumpDiff = 500;
+	UPROPERTY(EditDefaultsOnly, Category = jump)
+	float jumpDiff = 1000;
 	float basePlayerMovement = 0;
+	bool moveChangeOnce = false;
+
+	bool boost = false;
+	float boostTimer = 0;
+	UPROPERTY(EditDefaultsOnly, Category = boost)
+	float maxBoostTime = 3.0f;
 
 public:
 	// Sets default values for this character's properties
@@ -60,6 +68,9 @@ protected:
 	void chargeJump();
 
 	void jump();
+
+	void BoostOn() { boost = true; boostTimer = 0; }
+	void BoostOff() { boost = false; }
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

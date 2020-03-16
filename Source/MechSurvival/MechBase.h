@@ -49,6 +49,8 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 	float boostTimer = 0;
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float maxBoostTime = 3.0f;
+	UPROPERTY(EditDefaultsOnly, Category = boost)
+	float boostAmount = 100;
 
 public:
 	// Sets default values for this character's properties

@@ -103,7 +103,7 @@ void AMechBase::Tick(float DeltaTime)
 
 	if (boost)
 	{
-		LaunchCharacter(GetActorForwardVector() * 100, false, false);
+		LaunchCharacter(GetActorForwardVector() * boostAmount * DeltaTime, false, false);
 		boostTimer += DeltaTime;
 		if (boostTimer > maxBoostTime)
 		{

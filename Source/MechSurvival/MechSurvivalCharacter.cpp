@@ -158,7 +158,7 @@ void AMechSurvivalCharacter::OnInteract()
 
 	if (mech)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
 		mech->setPilot(this);
 		SetActorEnableCollision(false);
 		GetWorld()->GetFirstPlayerController()->Possess(mech);

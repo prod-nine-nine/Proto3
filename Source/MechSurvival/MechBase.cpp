@@ -4,16 +4,20 @@
 #include "MechBase.h"
 #include "MechSurvivalProjectile.h"
 #include "MechSurvivalCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "DrawDebugHelpers.h"
+#include "Engine.h"
+
 // Sets default values
 AMechBase::AMechBase()
 {
-	//PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;
 	// Set size for collision capsule
 
 	GetCapsuleComponent()->InitCapsuleSize(55.f* mechScale, 96.0f * mechScale);
@@ -70,6 +74,9 @@ void AMechBase::BeginPlay()
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
 	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 
+	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
+	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
+
 	SpawnDefaultController();
 }
 
@@ -78,6 +85,31 @@ void AMechBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
+	{
+		jumpChargeTime += DeltaTime;
+		if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
+			moveChangeOnce = true;
+		}
+		//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
+	}
+	else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
+	{
+		jumpChargeTime = maxJumpChargeTime;
+	}
+
+
+	if (boost)
+	{
+		LaunchCharacter(GetActorForwardVector() * boostAmount * DeltaTime, false, false);
+		boostTimer += DeltaTime;
+		if (boostTimer > maxBoostTime)
+		{
+			BoostOff();
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -87,12 +119,18 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMechBase::chargeJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMechBase::jump);
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechBase::OnFire);
+
+	//Bind interact event
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMechBase::OnInteract);
+
+	//bind boost button
+	PlayerInputComponent->BindAction("Boost", IE_Pressed, this, &AMechBase::BoostOn);
+	PlayerInputComponent->BindAction("Boost", IE_Released, this, &AMechBase::BoostOff);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMechBase::MoveForward);
@@ -159,6 +197,27 @@ void AMechBase::OnInteract()
 		SpawnDefaultController();
 		pilot = 0;
 	}
+}
+
+void AMechBase::chargeJump()
+{
+	moveChangeOnce = false;
+	jumpChargeTime = 0;
+	chargingJump = true;
+}
+
+void AMechBase::jump()
+{
+	if (!GetCharacterMovement()->IsFalling())
+	{
+		float actualJump = jumpMin + ((jumpChargeTime / maxJumpChargeTime) * jumpDiff);
+
+		LaunchCharacter(FVector(0, 0, actualJump), false, true);
+	}
+
+	chargingJump = false;
+
+	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement;
 }
 
 void AMechBase::MoveForward(float Value)

@@ -29,11 +29,28 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 
 	/** Pawn mesh: outside view only seen when not them */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		class USkeletalMeshComponent* Mesh3P;
+		USkeletalMeshComponent* Mesh3P;
 
 	class AMechSurvivalCharacter* pilot = 0;
 
 	float mechScale = 2.5f;
+
+	bool chargingJump = false;
+	float jumpChargeTime = 0;
+	UPROPERTY(EditDefaultsOnly, Category = jump)
+	float maxJumpChargeTime = 1.0f;
+	float jumpMin = 0;
+	UPROPERTY(EditDefaultsOnly, Category = jump)
+	float jumpDiff = 1000;
+	float basePlayerMovement = 0;
+	bool moveChangeOnce = false;
+
+	bool boost = false;
+	float boostTimer = 0;
+	UPROPERTY(EditDefaultsOnly, Category = boost)
+	float maxBoostTime = 3.0f;
+	UPROPERTY(EditDefaultsOnly, Category = boost)
+	float boostAmount = 100;
 
 public:
 	// Sets default values for this character's properties
@@ -49,6 +66,13 @@ protected:
 	void OnFire();
 
 	void OnInteract();
+
+	void chargeJump();
+
+	void jump();
+
+	void BoostOn() { boost = true; boostTimer = 0; }
+	void BoostOff() { boost = false; }
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

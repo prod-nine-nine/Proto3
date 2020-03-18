@@ -55,11 +55,11 @@ private:
 
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = gameplay)
 	bool jumpEnabled = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = gameplay)
 	bool gunEnabled = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = gameplay)
 	bool boostEnabled = false;
 
 public:

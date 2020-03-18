@@ -9,6 +9,7 @@
 UCLASS()
 class MECHSURVIVAL_API AMechBase : public ACharacter
 {
+private:
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
@@ -53,6 +54,15 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 	float boostAmount = 100;
 
 public:
+
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool jumpEnabled = false;
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool gunEnabled = false;
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool boostEnabled = false;
+
+public:
 	// Sets default values for this character's properties
 	AMechBase();
 
@@ -71,7 +81,7 @@ protected:
 
 	void jump();
 
-	void BoostOn() { boost = true; boostTimer = 0; }
+	void BoostOn() { if (!boostEnabled) { return; } boost = true; boostTimer = 0; }
 	void BoostOff() { boost = false; }
 
 	/** Handles moving forward/backward */

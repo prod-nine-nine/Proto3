@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Type.h"
 #include "MechSurvivalCharacter.generated.h"
 
 class UInputComponent;
@@ -60,12 +61,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* FireAnimation;
 
+	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float range = 200.0f;
+	UPROPERTY(EditAnywhere, Category = Gameplay)
+	float minerRange = 500.0f;
+
+	bool firing = false;
+	int scrapAmount = 0;
+
+	TEnumAsByte<TYPE> UpgradeType = NONE;
 
 protected:
 	
-	/** Fires a projectile. */
 	void OnFire();
+	void OnFireStop();
 
 	void OnInteract();
 
@@ -93,6 +102,8 @@ protected:
 	// End of APawn interface
 
 public:
+	virtual void Tick(float DeltaTime) override;
+
 	/** Returns Mesh1P subobject **/
 	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/

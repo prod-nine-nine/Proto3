@@ -1,8 +1,8 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "MechSurvivalCharacter.h"
-#include "MechSurvivalProjectile.h"
 #include "MechBase.h"
+#include "UpgradeBase.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -20,6 +20,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 AMechSurvivalCharacter::AMechSurvivalCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
@@ -85,6 +87,7 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechSurvivalCharacter::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMechSurvivalCharacter::OnFireStop);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMechSurvivalCharacter::OnInteract);
 
@@ -101,32 +104,53 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMechSurvivalCharacter::LookUpAtRate);
 }
 
-void AMechSurvivalCharacter::OnFire()
+void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
-	// try and fire a projectile
-	if (ProjectileClass != NULL)
+	Super::Tick(DeltaTime);
+
+	if (firing)
 	{
-		UWorld* const World = GetWorld();
-		if (World != NULL)
+		const FRotator ShootDir = GetControlRotation();
+		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+		const FVector ShootStart = FP_MuzzleLocation->GetComponentLocation();
+
+		FHitResult hit;
+
+		FCollisionQueryParams traceParams;
+		traceParams.AddIgnoredActor(this);
+
+		GetWorld()->LineTraceSingleByChannel(hit, ShootStart, ShootStart + ShootDir.Vector() * minerRange, ECC_WorldStatic, traceParams);
+
+		DrawDebugLine(GetWorld(), ShootStart, ShootStart + ShootDir.Vector() * minerRange, FColor::Blue, false, 10, 0, 1);
+
+		if (hit.bBlockingHit)
 		{
-			
-			const FRotator SpawnRotation = GetControlRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-			// spawn the projectile at the muzzle
-			World->SpawnActor<AMechSurvivalProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor);
+			if (upgrade)
+			{
+				TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
+				if (type == SCRAP)
+				{
+					scrapAmount++;
+				}
+				else if (type != NONE && UpgradeType == NONE)
+				{
+					UpgradeType = type;
+					upgrade->Destroy();
+				}
+			}
 		}
 	}
+}
+
+void AMechSurvivalCharacter::OnFire()
+{
+	firing = true;
 
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		UGameplayStatics::PlaySound2D(this, FireSound);
 	}
 
 	// try and play a firing animation if specified
@@ -139,6 +163,11 @@ void AMechSurvivalCharacter::OnFire()
 			AnimInstance->Montage_Play(FireAnimation, 1.f);
 		}
 	}
+}
+
+void AMechSurvivalCharacter::OnFireStop()
+{
+	firing = false;
 }
 
 void AMechSurvivalCharacter::OnInteract()

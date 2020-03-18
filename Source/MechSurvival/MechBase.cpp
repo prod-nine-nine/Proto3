@@ -148,6 +148,7 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMechBase::OnFire()
 {
+	if (!gunEnabled) { return; }
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
@@ -201,6 +202,7 @@ void AMechBase::OnInteract()
 
 void AMechBase::chargeJump()
 {
+	if (!jumpEnabled) { return; }
 	moveChangeOnce = false;
 	jumpChargeTime = 0;
 	chargingJump = true;
@@ -208,7 +210,7 @@ void AMechBase::chargeJump()
 
 void AMechBase::jump()
 {
-	if (!GetCharacterMovement()->IsFalling())
+	if (!GetCharacterMovement()->IsFalling() && jumpEnabled)
 	{
 		float actualJump = jumpMin + ((jumpChargeTime / maxJumpChargeTime) * jumpDiff);
 

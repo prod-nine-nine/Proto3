@@ -28,16 +28,21 @@ AUpgradeBase::AUpgradeBase()
 void AUpgradeBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	gatherTimeLeft = timeToGather;
+
+	MI = UMaterialInstanceDynamic::Create(Mesh->GetMaterial(0), this);
+	Mesh->SetMaterial(0, MI);
 }
 
 TEnumAsByte<TYPE> AUpgradeBase::mine(float deltaSeconds)
 {
-	timeToGather -= deltaSeconds;
+	gatherTimeLeft -= deltaSeconds;
 
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), timeToGather));
+	MI->SetScalarParameterValue(FName("Amount"), 1 - gatherTimeLeft / timeToGather);
 
-	if (timeToGather <= 0)
+	if (gatherTimeLeft <= 0)
 	{
 		return type;
 	}

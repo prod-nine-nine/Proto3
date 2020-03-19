@@ -57,8 +57,14 @@ AMechSurvivalCharacter::AMechSurvivalCharacter()
 	FP_MuzzleLocation->SetupAttachment(FP_Gun);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
-	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 0.0f, 10.0f);
+	// Create a gun mesh component
+	LaserParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserParticle"));
+	LaserParticle->SetAutoActivate(false);
+	LaserParticle->SetupAttachment(RootComponent);
+
+	LaserSparks = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserSparks"));
+	LaserSparks->SetAutoActivate(false);
+	LaserSparks->SetupAttachment(RootComponent);
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
 	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
@@ -109,24 +115,34 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (firing)
 	{
-		const FRotator ShootDir = GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		const FVector ShootStart = FP_MuzzleLocation->GetComponentLocation();
+
+		const FVector ShootEnd = ShootStart + GetControlRotation().Vector() * minerRange;
 
 		FHitResult hit;
 
 		FCollisionQueryParams traceParams;
 		traceParams.AddIgnoredActor(this);
 
-		GetWorld()->LineTraceSingleByChannel(hit, ShootStart, ShootStart + ShootDir.Vector() * minerRange, ECC_WorldStatic, traceParams);
+		GetWorld()->LineTraceSingleByChannel(hit, ShootStart, ShootEnd, ECC_WorldStatic, traceParams);
 
-		DrawDebugLine(GetWorld(), ShootStart, ShootStart + ShootDir.Vector() * minerRange, FColor::Blue, false, 10, 0, 1);
+		LaserParticle->SetBeamSourcePoint(0,ShootStart,0);
+		LaserParticle->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
+
+		//DrawDebugLine(GetWorld(), ShootStart, ShootStart + ShootDir.Vector() * minerRange, FColor::Blue, false, 10, 0, 1);
 
 		if (hit.bBlockingHit)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString(hit.Actor.Get()->GetName()));
 			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor.Get());
-			if (upgrade)
+
+			LaserSparks->SetActive(true);
+
+			LaserSparks->SetWorldLocation(hit.ImpactPoint);
+			LaserSparks->SetWorldRotation(FRotator(0,GetControlRotation().Yaw + 180,0));
+
+			if (upgrade && UpgradeType == NONE)
 			{
 				TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
 				if (type == SCRAP)
@@ -134,7 +150,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 					scrapAmount++;
 					upgrade->Destroy();
 				}
-				else if (type != NONE && UpgradeType == NONE)
+				else if (type != NONE)
 				{
 					UpgradeType = type;
 					upgrade->Destroy();
@@ -173,6 +189,10 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 						}
 					}
 				}
+				else
+				{
+					LaserSparks->SetActive(false);
+				}
 			}
 		}
 	}
@@ -181,6 +201,9 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 void AMechSurvivalCharacter::OnFire()
 {
 	firing = true;
+
+	LaserParticle->SetActive(true);
+	LaserSparks->SetActive(true);
 
 	// try and play the sound if specified
 	if (FireSound != NULL)
@@ -203,6 +226,10 @@ void AMechSurvivalCharacter::OnFire()
 void AMechSurvivalCharacter::OnFireStop()
 {
 	firing = false;
+	LaserParticle->SetActive(false);
+	LaserSparks->SetActive(false);
+	LaserParticle->SetBeamSourcePoint(0, GetActorLocation(), 0);
+	LaserParticle->SetBeamEndPoint(0, GetActorLocation());
 }
 
 void AMechSurvivalCharacter::OnInteract()
@@ -222,6 +249,7 @@ void AMechSurvivalCharacter::OnInteract()
 
 	if (mech)
 	{
+		OnFireStop();
 		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
 		mech->setPilot(this);
 		SetActorEnableCollision(false);

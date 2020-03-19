@@ -53,6 +53,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float boostAmount = 100;
 
+	float maxDurability = 100;
+	float currentDurability = 0;
+
 public:
 
 	UPROPERTY(EditAnywhere, Category = gameplay)
@@ -67,6 +70,14 @@ public:
 	AMechBase();
 
 	void setPilot(AMechSurvivalCharacter* newPilot) { pilot = newPilot; }
+
+	void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
+
+	bool healMech(float healing) {
+		if (currentDurability == maxDurability) { return false; }
+		currentDurability = (currentDurability + healing >= maxDurability) ? maxDurability : currentDurability + healing;
+		return true;
+	}
 
 protected:
 	// Called when the game starts or when spawned

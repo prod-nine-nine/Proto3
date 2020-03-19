@@ -67,8 +67,11 @@ public:
 	float minerRange = 500.0f;
 
 	bool firing = false;
+
+	UPROPERTY(VisibleAnywhere, Category = Gameplay)
 	int scrapAmount = 0;
 
+	UPROPERTY(VisibleAnywhere, Category = Gameplay)
 	TEnumAsByte<TYPE> UpgradeType = NONE;
 
 protected:

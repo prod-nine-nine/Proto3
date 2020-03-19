@@ -107,7 +107,6 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	if (firing)
 	{
 		const FRotator ShootDir = GetControlRotation();
@@ -125,18 +124,54 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 
 		if (hit.bBlockingHit)
 		{
-			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor);
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString(hit.Actor.Get()->GetName()));
+			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor.Get());
 			if (upgrade)
 			{
 				TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
 				if (type == SCRAP)
 				{
 					scrapAmount++;
+					upgrade->Destroy();
 				}
 				else if (type != NONE && UpgradeType == NONE)
 				{
 					UpgradeType = type;
 					upgrade->Destroy();
+				}
+			}
+			else
+			{
+				AMechBase* mech = Cast<AMechBase>(hit.Actor.Get());
+				if (mech)
+				{
+					if (UpgradeType != NONE && UpgradeType != SCRAP)
+					{
+						switch (UpgradeType)
+						{
+						case JUMP:
+							mech->jumpEnabled = true;
+							UpgradeType = NONE;
+							break;
+						case GUN:
+							mech->gunEnabled = true;
+							UpgradeType = NONE;
+							break;
+						case BOOST:
+							mech->boostEnabled = true;
+							UpgradeType = NONE;
+							break;
+						default:
+							break;
+						}
+					}
+					else if (scrapAmount > 0)
+					{
+						if (mech->healMech(10))
+						{
+							scrapAmount--;
+						}
+					}
 				}
 			}
 		}

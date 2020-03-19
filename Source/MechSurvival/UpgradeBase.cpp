@@ -5,6 +5,8 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 
+#include "Engine.h"
+
 // Sets default values
 AUpgradeBase::AUpgradeBase()
 {
@@ -32,6 +34,8 @@ void AUpgradeBase::BeginPlay()
 TEnumAsByte<TYPE> AUpgradeBase::mine(float deltaSeconds)
 {
 	timeToGather -= deltaSeconds;
+
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), timeToGather));
 
 	if (timeToGather <= 0)
 	{

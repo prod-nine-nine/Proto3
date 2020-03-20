@@ -36,8 +36,13 @@ class AMechSurvivalCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
+	float health = 100;
+
 public:
 	AMechSurvivalCharacter();
+
+	UFUNCTION(BlueprintCallable)
+		void damagePlayer(float damage);
 
 protected:
 	virtual void BeginPlay();

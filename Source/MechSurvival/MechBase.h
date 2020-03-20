@@ -34,6 +34,8 @@ private:
 
 	class AMechSurvivalCharacter* pilot = 0;
 
+	UMaterialInstanceDynamic* MI;
+
 	float mechScale = 2.5f;
 
 	bool chargingJump = false;
@@ -65,13 +67,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = gameplay)
 	bool boostEnabled = false;
 
+	bool mechEnabled = true;
+
 public:
 	// Sets default values for this character's properties
 	AMechBase();
 
 	void setPilot(AMechSurvivalCharacter* newPilot) { pilot = newPilot; }
 
-	void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
+	UFUNCTION(BlueprintCallable)
+		void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
 
 	bool healMech(float healing) {
 		if (currentDurability == maxDurability) { return false; }

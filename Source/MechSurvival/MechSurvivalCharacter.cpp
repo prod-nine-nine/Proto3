@@ -70,6 +70,15 @@ AMechSurvivalCharacter::AMechSurvivalCharacter()
 	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
 }
 
+void AMechSurvivalCharacter::damagePlayer(float damage)
+{
+	health -= damage;
+	if (health < 0)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), FName("Level_Greybox"));
+	}
+}
+
 void AMechSurvivalCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -130,6 +139,9 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserParticle->SetBeamSourcePoint(0,ShootStart,0);
 		LaserParticle->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
 
+		LaserSparks->SetWorldLocation(hit.ImpactPoint);
+		LaserSparks->SetWorldRotation(FRotator(0, GetControlRotation().Yaw + 180, 0));
+
 		//DrawDebugLine(GetWorld(), ShootStart, ShootStart + ShootDir.Vector() * minerRange, FColor::Blue, false, 10, 0, 1);
 
 		if (hit.bBlockingHit)
@@ -137,23 +149,24 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString(hit.Actor.Get()->GetName()));
 			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor.Get());
 
-			LaserSparks->SetActive(true);
-
-			LaserSparks->SetWorldLocation(hit.ImpactPoint);
-			LaserSparks->SetWorldRotation(FRotator(0,GetControlRotation().Yaw + 180,0));
-
-			if (upgrade && UpgradeType == NONE)
+			if (upgrade)
 			{
-				TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
-				if (type == SCRAP)
+				TEnumAsByte<TYPE> queryType = upgrade->getType();
+
+				if (UpgradeType == NONE || queryType == SCRAP)
 				{
-					scrapAmount++;
-					upgrade->Destroy();
-				}
-				else if (type != NONE)
-				{
-					UpgradeType = type;
-					upgrade->Destroy();
+					TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
+
+					if (type == SCRAP)
+					{
+						scrapAmount++;
+						upgrade->Destroy();
+					}
+					else if (type != NONE && UpgradeType == NONE)
+					{
+						UpgradeType = type;
+						upgrade->Destroy();
+					}
 				}
 			}
 			else
@@ -188,10 +201,6 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 							scrapAmount--;
 						}
 					}
-				}
-				else
-				{
-					LaserSparks->SetActive(false);
 				}
 			}
 		}
@@ -249,11 +258,14 @@ void AMechSurvivalCharacter::OnInteract()
 
 	if (mech)
 	{
-		OnFireStop();
-		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
-		mech->setPilot(this);
-		SetActorEnableCollision(false);
-		GetWorld()->GetFirstPlayerController()->Possess(mech);
+		if (mech->mechEnabled)
+		{
+			OnFireStop();
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
+			mech->setPilot(this);
+			SetActorEnableCollision(false);
+			GetWorld()->GetFirstPlayerController()->Possess(mech);
+		}
 	}
 }
 

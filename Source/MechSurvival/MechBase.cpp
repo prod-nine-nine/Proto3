@@ -77,6 +77,9 @@ void AMechBase::BeginPlay()
 	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
 
+	MI = UMaterialInstanceDynamic::Create(Mesh3P->GetMaterial(0), this);
+	Mesh3P->SetMaterial(0, MI);
+
 	SpawnDefaultController();
 }
 
@@ -110,6 +113,25 @@ void AMechBase::Tick(float DeltaTime)
 			BoostOff();
 		}
 	}
+
+	if (currentDurability <= 0 && mechEnabled)
+	{
+		mechEnabled = false;
+		if (pilot)
+		{
+			OnInteract();
+		}
+	}
+	else if (currentDurability > 0 && !mechEnabled)
+	{
+		mechEnabled = true;
+	}
+
+	float scalar = (1 - (((currentDurability / maxDurability) * 0.5)+0.5 ));
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), scalar));
+
+	MI->SetScalarParameterValue(FName("Amount"), scalar);
 }
 
 // Called to bind functionality to input

@@ -9,6 +9,7 @@
 UCLASS()
 class MECHSURVIVAL_API AMechBase : public ACharacter
 {
+private:
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
@@ -33,6 +34,8 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 
 	class AMechSurvivalCharacter* pilot = 0;
 
+	UMaterialInstanceDynamic* MI;
+
 	float mechScale = 2.5f;
 
 	bool chargingJump = false;
@@ -52,11 +55,35 @@ class MECHSURVIVAL_API AMechBase : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float boostAmount = 100;
 
+	float maxDurability = 100;
+	float currentDurability = 0;
+
+public:
+
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool jumpEnabled = false;
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool gunEnabled = false;
+	UPROPERTY(EditAnywhere, Category = gameplay)
+	bool boostEnabled = false;
+
+	bool mechEnabled = true;
+	bool jumping = false;
+	bool canBoostJump = false;
 public:
 	// Sets default values for this character's properties
 	AMechBase();
 
 	void setPilot(AMechSurvivalCharacter* newPilot) { pilot = newPilot; }
+
+	UFUNCTION(BlueprintCallable)
+		void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
+
+	bool healMech(float healing) {
+		if (currentDurability == maxDurability) { return false; }
+		currentDurability = (currentDurability + healing >= maxDurability) ? maxDurability : currentDurability + healing;
+		return true;
+	}
 
 protected:
 	// Called when the game starts or when spawned
@@ -69,9 +96,10 @@ protected:
 
 	void chargeJump();
 
-	void jump();
+	void Jump() override;
+	void StopJumping() override;
 
-	void BoostOn() { boost = true; boostTimer = 0; }
+	void BoostOn() { if (!boostEnabled) { return; } boost = true; boostTimer = 0; }
 	void BoostOff() { boost = false; }
 
 	/** Handles moving forward/backward */

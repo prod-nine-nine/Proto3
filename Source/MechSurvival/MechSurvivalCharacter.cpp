@@ -1,8 +1,8 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "MechSurvivalCharacter.h"
-#include "MechSurvivalProjectile.h"
 #include "MechBase.h"
+#include "UpgradeBase.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -20,6 +20,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 AMechSurvivalCharacter::AMechSurvivalCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
@@ -43,32 +45,48 @@ AMechSurvivalCharacter::AMechSurvivalCharacter()
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 	Mesh1P->SetHiddenInGame(false, true);
 
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
-	FP_Gun->SetupAttachment(RootComponent);
-
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
+	FP_MuzzleLocation->SetupAttachment(Mesh1P);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
-	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 0.0f, 10.0f);
+	// Create a gun mesh component
+	LaserParticle1 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserParticle1"));
+	LaserParticle1->SetAutoActivate(false);
+	LaserParticle1->SetupAttachment(RootComponent);
+
+	LaserParticle2 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserParticle2"));
+	LaserParticle2->SetAutoActivate(false);
+	LaserParticle2->SetupAttachment(RootComponent);
+
+	LaserParticle3 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserParticle3"));
+	LaserParticle3->SetAutoActivate(false);
+	LaserParticle3->SetupAttachment(RootComponent);
+
+	LaserParticle4 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserParticle4"));
+	LaserParticle4->SetAutoActivate(false);
+	LaserParticle4->SetupAttachment(RootComponent);
+
+	LaserSparks = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LaserSparks"));
+	LaserSparks->SetAutoActivate(false);
+	LaserSparks->SetupAttachment(RootComponent);
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
 	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
+}
+
+void AMechSurvivalCharacter::damagePlayer(float damage)
+{
+	health -= damage;
+	if (health < 0)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), FName("Level_Greybox"));
+	}
 }
 
 void AMechSurvivalCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -85,8 +103,11 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechSurvivalCharacter::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMechSurvivalCharacter::OnFireStop);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMechSurvivalCharacter::OnInteract);
+
+	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &AMechSurvivalCharacter::SwitchEquip);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMechSurvivalCharacter::MoveForward);
@@ -101,44 +122,143 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMechSurvivalCharacter::LookUpAtRate);
 }
 
-void AMechSurvivalCharacter::OnFire()
+void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
-	// try and fire a projectile
-	if (ProjectileClass != NULL)
+	Super::Tick(DeltaTime);
+	if (firing && armed)
 	{
-		UWorld* const World = GetWorld();
-		if (World != NULL)
+		const FVector ShootStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF1"));
+
+		const FVector ShootEnd = ShootStart + GetControlRotation().Vector() * minerRange;
+
+		FHitResult hit;
+
+		FCollisionQueryParams traceParams;
+		traceParams.AddIgnoredActor(this);
+
+		GetWorld()->LineTraceSingleByChannel(hit, ShootStart, ShootEnd, ECC_WorldStatic, traceParams);
+
+		FVector LaserStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF1"));
+
+		LaserParticle1->SetBeamSourcePoint(0,LaserStart,0);
+		LaserParticle1->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
+
+		LaserStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF2"));
+
+		LaserParticle2->SetBeamSourcePoint(0, LaserStart, 0);
+		LaserParticle2->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
+
+		LaserStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF3"));
+
+		LaserParticle3->SetBeamSourcePoint(0, LaserStart, 0);
+		LaserParticle3->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
+
+		LaserStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF4"));
+
+		LaserParticle4->SetBeamSourcePoint(0, LaserStart, 0);
+		LaserParticle4->SetBeamEndPoint(0, (hit.bBlockingHit) ? hit.ImpactPoint : ShootEnd);
+
+		LaserSparks->SetWorldLocation(hit.ImpactPoint);
+		LaserSparks->SetWorldRotation(FRotator(0, GetControlRotation().Yaw + 180, 0));
+
+		//DrawDebugLine(GetWorld(), ShootStart, ShootEnd, FColor::Blue, false, 10, 0, 1);
+
+		if (hit.bBlockingHit)
 		{
-			
-			const FRotator SpawnRotation = GetControlRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString(hit.Actor.Get()->GetName()));
+			AUpgradeBase* upgrade = Cast<AUpgradeBase>(hit.Actor.Get());
 
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+			if (upgrade)
+			{
+				TEnumAsByte<TYPE> queryType = upgrade->getType();
 
-			// spawn the projectile at the muzzle
-			World->SpawnActor<AMechSurvivalProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+				if (UpgradeType == NONE || queryType == SCRAP)
+				{
+					TEnumAsByte<TYPE> type = upgrade->mine(DeltaTime);
+
+					if (type == SCRAP)
+					{
+						scrapAmount++;
+						upgrade->Destroy();
+					}
+					else if (type != NONE && UpgradeType == NONE)
+					{
+						UpgradeType = type;
+						upgrade->Destroy();
+					}
+				}
+			}
+			else
+			{
+				AMechBase* mech = Cast<AMechBase>(hit.Actor.Get());
+				if (mech)
+				{
+					if (UpgradeType != NONE && UpgradeType != SCRAP)
+					{
+						switch (UpgradeType)
+						{
+						case JUMP:
+							mech->jumpEnabled = true;
+							UpgradeType = NONE;
+							break;
+						case GUN:
+							mech->gunEnabled = true;
+							UpgradeType = NONE;
+							break;
+						case BOOST:
+							mech->boostEnabled = true;
+							UpgradeType = NONE;
+							break;
+						default:
+							break;
+						}
+					}
+					else if (scrapAmount > 0)
+					{
+						if (mech->healMech(10))
+						{
+							scrapAmount--;
+						}
+					}
+				}
+			}
 		}
 	}
+}
+
+void AMechSurvivalCharacter::OnFire()
+{
+	firing = true;
+
+	LaserParticle1->SetActive(true);
+	LaserParticle2->SetActive(true);
+	LaserParticle3->SetActive(true);
+	LaserParticle4->SetActive(true);
+	LaserSparks->SetActive(true);
 
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		UGameplayStatics::PlaySound2D(this, FireSound);
 	}
+}
 
-	// try and play a firing animation if specified
-	if (FireAnimation != NULL)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
-	}
+void AMechSurvivalCharacter::OnFireStop()
+{
+	firing = false;
+	LaserParticle1->SetActive(false);
+	LaserParticle2->SetActive(false);
+	LaserParticle3->SetActive(false);
+	LaserParticle4->SetActive(false);
+	LaserSparks->SetActive(false);
+	LaserParticle1->SetBeamSourcePoint(0, GetActorLocation(), 0);
+	LaserParticle2->SetBeamSourcePoint(0, GetActorLocation(), 0);
+	LaserParticle3->SetBeamSourcePoint(0, GetActorLocation(), 0);
+	LaserParticle4->SetBeamSourcePoint(0, GetActorLocation(), 0);
+	LaserParticle1->SetBeamEndPoint(0, GetActorLocation());
+	LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
+	LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
+	LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
 }
 
 void AMechSurvivalCharacter::OnInteract()
@@ -158,10 +278,14 @@ void AMechSurvivalCharacter::OnInteract()
 
 	if (mech)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
-		mech->setPilot(this);
-		SetActorEnableCollision(false);
-		GetWorld()->GetFirstPlayerController()->Possess(mech);
+		if (mech->mechEnabled)
+		{
+			OnFireStop();
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("hitMech"));
+			mech->setPilot(this);
+			SetActorEnableCollision(false);
+			GetWorld()->GetFirstPlayerController()->Possess(mech);
+		}
 	}
 }
 

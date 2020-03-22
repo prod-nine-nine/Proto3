@@ -77,6 +77,9 @@ void AMechBase::BeginPlay()
 	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
 
+	MI = UMaterialInstanceDynamic::Create(Mesh3P->GetMaterial(0), this);
+	Mesh3P->SetMaterial(0, MI);
+
 	SpawnDefaultController();
 }
 
@@ -85,19 +88,36 @@ void AMechBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
+	//if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
+	//{
+	//	jumpChargeTime += DeltaTime;
+	//	if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
+	//	{
+	//		GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
+	//		moveChangeOnce = true;
+	//	}
+	//	//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
+	//}
+	//else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
+	//{
+	//	jumpChargeTime = maxJumpChargeTime;
+	//}
+
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%d"), canBoostJump));
+
+	if (GetVelocity().Z < -10 && !canBoostJump && jumping)
 	{
-		jumpChargeTime += DeltaTime;
-		if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
-		{
-			GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
-			moveChangeOnce = true;
-		}
-		//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
+		canBoostJump = true;
 	}
-	else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
+
+	if (jumping && jumpChargeTime + DeltaTime <= maxJumpChargeTime && canBoostJump)
 	{
-		jumpChargeTime = maxJumpChargeTime;
+		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity , false, true);
+		jumpChargeTime += DeltaTime;
+	}
+	else if (!jumping)
+	{
+		jumpChargeTime = 0;
 	}
 
 
@@ -110,6 +130,25 @@ void AMechBase::Tick(float DeltaTime)
 			BoostOff();
 		}
 	}
+
+	if (currentDurability <= 0 && mechEnabled)
+	{
+		mechEnabled = false;
+		if (pilot)
+		{
+			OnInteract();
+		}
+	}
+	else if (currentDurability > 0 && !mechEnabled)
+	{
+		mechEnabled = true;
+	}
+
+	float scalar = (1 - (((currentDurability / maxDurability) * 0.5)+0.5 ));
+
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), scalar));
+
+	MI->SetScalarParameterValue(FName("Amount"), scalar);
 }
 
 // Called to bind functionality to input
@@ -119,8 +158,8 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMechBase::chargeJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMechBase::jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMechBase::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMechBase::StopJumping);
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechBase::OnFire);
@@ -148,6 +187,7 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMechBase::OnFire()
 {
+	if (!gunEnabled) { return; }
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
@@ -201,14 +241,21 @@ void AMechBase::OnInteract()
 
 void AMechBase::chargeJump()
 {
+	if (!jumpEnabled) { return; }
 	moveChangeOnce = false;
 	jumpChargeTime = 0;
 	chargingJump = true;
 }
 
-void AMechBase::jump()
+void AMechBase::Jump()
 {
-	if (!GetCharacterMovement()->IsFalling())
+	if (jumpEnabled)
+	{
+		jumping = true;
+		ACharacter::Jump();
+	}
+
+	/*if (!GetCharacterMovement()->IsFalling() && jumpEnabled)
 	{
 		float actualJump = jumpMin + ((jumpChargeTime / maxJumpChargeTime) * jumpDiff);
 
@@ -217,7 +264,14 @@ void AMechBase::jump()
 
 	chargingJump = false;
 
-	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement;
+	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement;*/
+}
+
+void AMechBase::StopJumping()
+{
+	jumping = false;
+	canBoostJump = false;
+	ACharacter::StopJumping();
 }
 
 void AMechBase::MoveForward(float Value)

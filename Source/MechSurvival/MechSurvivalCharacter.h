@@ -18,16 +18,21 @@ class AMechSurvivalCharacter : public ACharacter
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	class USkeletalMeshComponent* Mesh1P;
 
-	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* FP_Gun;
-
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USceneComponent* FP_MuzzleLocation;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Laser)
-	class UParticleSystemComponent* LaserParticle;
+	class UParticleSystemComponent* LaserParticle1;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Laser)
+	class UParticleSystemComponent* LaserParticle2;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Laser)
+	class UParticleSystemComponent* LaserParticle3;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Laser)
+	class UParticleSystemComponent* LaserParticle4;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Laser)
 	class UParticleSystemComponent* LaserSparks;
@@ -64,16 +69,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	class USoundBase* FireSound;
 
-	/** AnimMontage to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class UAnimMontage* FireAnimation;
-
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float range = 200.0f;
+
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float minerRange = 500.0f;
-
-	bool firing = false;
 
 	UPROPERTY(VisibleAnywhere, Category = Gameplay)
 	int scrapAmount = 0;
@@ -81,12 +81,20 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Gameplay)
 	TEnumAsByte<TYPE> UpgradeType = NONE;
 
+	UPROPERTY(BlueprintReadOnly, Category = Anim)
+	bool armed = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = Anim)
+	bool firing = false;
+
 protected:
 	
 	void OnFire();
 	void OnFireStop();
 
 	void OnInteract();
+
+	void SwitchEquip() { armed = !armed; }
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

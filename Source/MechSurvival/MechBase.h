@@ -68,7 +68,8 @@ public:
 	bool boostEnabled = false;
 
 	bool mechEnabled = true;
-
+	bool jumping = false;
+	bool canBoostJump = false;
 public:
 	// Sets default values for this character's properties
 	AMechBase();
@@ -95,7 +96,8 @@ protected:
 
 	void chargeJump();
 
-	void jump();
+	void Jump() override;
+	void StopJumping() override;
 
 	void BoostOn() { if (!boostEnabled) { return; } boost = true; boostTimer = 0; }
 	void BoostOff() { boost = false; }

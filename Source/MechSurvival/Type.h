@@ -5,7 +5,7 @@
 UENUM()
 enum TYPE
 {
-	NONE,
+	NONE = 0,
 	JUMP,
 	GUN,
 	BOOST,

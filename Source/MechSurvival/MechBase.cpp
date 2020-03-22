@@ -129,7 +129,7 @@ void AMechBase::Tick(float DeltaTime)
 
 	float scalar = (1 - (((currentDurability / maxDurability) * 0.5)+0.5 ));
 
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), scalar));
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), scalar));
 
 	MI->SetScalarParameterValue(FName("Amount"), scalar);
 }

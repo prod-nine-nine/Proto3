@@ -16,10 +16,6 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USkeletalMeshComponent* Mesh1P;
 
-	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		class USkeletalMeshComponent* FP_Gun;
-
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 		class USceneComponent* FP_MuzzleLocation;
@@ -41,7 +37,7 @@ private:
 	bool chargingJump = false;
 	float jumpChargeTime = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
-	float maxJumpChargeTime = 1.0f;
+	float maxJumpChargeTime = 0.5f;
 	float jumpMin = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
 	float jumpDiff = 1000;
@@ -55,7 +51,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float boostAmount = 100;
 
+	UPROPERTY(EditAnywhere, Category = durability)
 	float maxDurability = 100;
+	UPROPERTY(EditAnywhere, Category = durability)
 	float currentDurability = 0;
 
 public:

@@ -51,7 +51,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float boostAmount = 100;
 
+	UPROPERTY(EditAnywhere, Category = durability)
 	float maxDurability = 100;
+	UPROPERTY(EditAnywhere, Category = durability)
 	float currentDurability = 0;
 
 public:

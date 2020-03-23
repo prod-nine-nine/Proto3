@@ -48,16 +48,8 @@ AMechBase::AMechBase()
 	Mesh3P->CastShadow = false;
 	Mesh3P->SetupAttachment(RootComponent);
 
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
-	FP_Gun->SetupAttachment(RootComponent);
-
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
+	FP_MuzzleLocation->SetupAttachment(Mesh1P);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
 	// Default offset from the character location for projectiles to spawn
@@ -71,8 +63,6 @@ AMechBase::AMechBase()
 void AMechBase::BeginPlay()
 {
 	Super::BeginPlay();
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 
 	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
@@ -112,10 +102,10 @@ void AMechBase::Tick(float DeltaTime)
 
 	if (jumping && jumpChargeTime + DeltaTime <= maxJumpChargeTime && canBoostJump)
 	{
-		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity , false, true);
+		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity/2 , false, true);
 		jumpChargeTime += DeltaTime;
 	}
-	else if (!jumping)
+	else if (!jumping && !(GetCharacterMovement()->IsFalling()))
 	{
 		jumpChargeTime = 0;
 	}
@@ -211,7 +201,7 @@ void AMechBase::OnFire()
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation(), 1.0f);
 	}
 
 	// try and play a firing animation if specified
@@ -249,7 +239,7 @@ void AMechBase::chargeJump()
 
 void AMechBase::Jump()
 {
-	if (jumpEnabled)
+	if (jumpEnabled && !(GetCharacterMovement()->IsFalling()))
 	{
 		jumping = true;
 		ACharacter::Jump();

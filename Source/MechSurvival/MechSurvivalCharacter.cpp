@@ -236,11 +236,11 @@ void AMechSurvivalCharacter::OnFire()
 	LaserParticle4->SetActive(true);
 	LaserSparks->SetActive(true);
 
-	// try and play the sound if specified
-	if (FireSound != NULL)
-	{
-		UGameplayStatics::PlaySound2D(this, FireSound);
-	}
+	//// try and play the sound if specified
+	//if (FireSound != NULL)
+	//{
+	//	UGameplayStatics::PlaySound2D(this, FireSound);
+	//}
 }
 
 void AMechSurvivalCharacter::OnFireStop()

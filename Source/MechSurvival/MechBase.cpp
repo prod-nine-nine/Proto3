@@ -48,16 +48,8 @@ AMechBase::AMechBase()
 	Mesh3P->CastShadow = false;
 	Mesh3P->SetupAttachment(RootComponent);
 
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
-	FP_Gun->SetupAttachment(RootComponent);
-
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
+	FP_MuzzleLocation->SetupAttachment(Mesh1P);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
 	// Default offset from the character location for projectiles to spawn
@@ -71,11 +63,12 @@ AMechBase::AMechBase()
 void AMechBase::BeginPlay()
 {
 	Super::BeginPlay();
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 
 	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
+
+	MI = UMaterialInstanceDynamic::Create(Mesh3P->GetMaterial(0), this);
+	Mesh3P->SetMaterial(0, MI);
 
 	SpawnDefaultController();
 }
@@ -85,19 +78,36 @@ void AMechBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
+	//if (chargingJump && jumpChargeTime + DeltaTime <= maxJumpChargeTime)
+	//{
+	//	jumpChargeTime += DeltaTime;
+	//	if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
+	//	{
+	//		GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
+	//		moveChangeOnce = true;
+	//	}
+	//	//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
+	//}
+	//else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
+	//{
+	//	jumpChargeTime = maxJumpChargeTime;
+	//}
+
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%d"), canBoostJump));
+
+	if (GetVelocity().Z < -10 && !canBoostJump && jumping)
 	{
-		jumpChargeTime += DeltaTime;
-		if (jumpChargeTime > maxJumpChargeTime * 0.1 && !moveChangeOnce)
-		{
-			GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement * 0.2;
-			moveChangeOnce = true;
-		}
-		//GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::Purple, FString::Printf(TEXT("%f"), jumpChargeTime));
+		canBoostJump = true;
 	}
-	else if (chargingJump && jumpChargeTime < maxJumpChargeTime)
+
+	if (jumping && jumpChargeTime + DeltaTime <= maxJumpChargeTime && canBoostJump)
 	{
-		jumpChargeTime = maxJumpChargeTime;
+		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity/2 , false, true);
+		jumpChargeTime += DeltaTime;
+	}
+	else if (!jumping && !(GetCharacterMovement()->IsFalling()))
+	{
+		jumpChargeTime = 0;
 	}
 
 
@@ -110,6 +120,25 @@ void AMechBase::Tick(float DeltaTime)
 			BoostOff();
 		}
 	}
+
+	if (currentDurability <= 0 && mechEnabled)
+	{
+		mechEnabled = false;
+		if (pilot)
+		{
+			OnInteract();
+		}
+	}
+	else if (currentDurability > 0 && !mechEnabled)
+	{
+		mechEnabled = true;
+	}
+
+	float scalar = (1 - (((currentDurability / maxDurability) * 0.5)+0.5 ));
+
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f"), scalar));
+
+	MI->SetScalarParameterValue(FName("Amount"), scalar);
 }
 
 // Called to bind functionality to input
@@ -119,8 +148,8 @@ void AMechBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMechBase::chargeJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMechBase::jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMechBase::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMechBase::StopJumping);
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMechBase::OnFire);
@@ -172,7 +201,7 @@ void AMechBase::OnFire()
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation(), 1.0f);
 	}
 
 	// try and play a firing animation if specified
@@ -208,9 +237,15 @@ void AMechBase::chargeJump()
 	chargingJump = true;
 }
 
-void AMechBase::jump()
+void AMechBase::Jump()
 {
-	if (!GetCharacterMovement()->IsFalling() && jumpEnabled)
+	if (jumpEnabled && !(GetCharacterMovement()->IsFalling()))
+	{
+		jumping = true;
+		ACharacter::Jump();
+	}
+
+	/*if (!GetCharacterMovement()->IsFalling() && jumpEnabled)
 	{
 		float actualJump = jumpMin + ((jumpChargeTime / maxJumpChargeTime) * jumpDiff);
 
@@ -219,7 +254,14 @@ void AMechBase::jump()
 
 	chargingJump = false;
 
-	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement;
+	GetCharacterMovement()->MaxWalkSpeed = basePlayerMovement;*/
+}
+
+void AMechBase::StopJumping()
+{
+	jumping = false;
+	canBoostJump = false;
+	ACharacter::StopJumping();
 }
 
 void AMechBase::MoveForward(float Value)

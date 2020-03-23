@@ -16,10 +16,6 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USkeletalMeshComponent* Mesh1P;
 
-	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		class USkeletalMeshComponent* FP_Gun;
-
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 		class USceneComponent* FP_MuzzleLocation;
@@ -34,12 +30,14 @@ private:
 
 	class AMechSurvivalCharacter* pilot = 0;
 
+	UMaterialInstanceDynamic* MI;
+
 	float mechScale = 2.5f;
 
 	bool chargingJump = false;
 	float jumpChargeTime = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
-	float maxJumpChargeTime = 1.0f;
+	float maxJumpChargeTime = 0.5f;
 	float jumpMin = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
 	float jumpDiff = 1000;
@@ -53,6 +51,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = boost)
 	float boostAmount = 100;
 
+	float maxDurability = 100;
+	float currentDurability = 0;
+
 public:
 
 	UPROPERTY(EditAnywhere, Category = gameplay)
@@ -62,11 +63,23 @@ public:
 	UPROPERTY(EditAnywhere, Category = gameplay)
 	bool boostEnabled = false;
 
+	bool mechEnabled = true;
+	bool jumping = false;
+	bool canBoostJump = false;
 public:
 	// Sets default values for this character's properties
 	AMechBase();
 
 	void setPilot(AMechSurvivalCharacter* newPilot) { pilot = newPilot; }
+
+	UFUNCTION(BlueprintCallable)
+		void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
+
+	bool healMech(float healing) {
+		if (currentDurability == maxDurability) { return false; }
+		currentDurability = (currentDurability + healing >= maxDurability) ? maxDurability : currentDurability + healing;
+		return true;
+	}
 
 protected:
 	// Called when the game starts or when spawned
@@ -79,7 +92,8 @@ protected:
 
 	void chargeJump();
 
-	void jump();
+	void Jump() override;
+	void StopJumping() override;
 
 	void BoostOn() { if (!boostEnabled) { return; } boost = true; boostTimer = 0; }
 	void BoostOff() { boost = false; }

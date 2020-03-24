@@ -24,6 +24,10 @@ class MECHSURVIVAL_API AUpgradeBase : public AActor
 	UPROPERTY(EditInstanceOnly, Category = Gather)
 		float timeToGather = 2.0f;
 
+	float gatherTimeLeft = 0;
+
+	UMaterialInstanceDynamic* MI;
+
 public:	
 	// Sets default values for this actor's properties
 	AUpgradeBase();
@@ -33,7 +37,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	
+	TEnumAsByte<TYPE> getType() { return type; }
+
 	TEnumAsByte<TYPE> mine(float deltaSeconds);
 
 	// Called every frame

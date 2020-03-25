@@ -43,6 +43,9 @@ class AMechSurvivalCharacter : public ACharacter
 
 	float health = 100;
 
+	float baseMovement = 0;
+	float sprintMultiplier = 1.5f;
+
 public:
 	AMechSurvivalCharacter();
 
@@ -94,7 +97,7 @@ protected:
 
 	void OnInteract();
 
-	void SwitchEquip() { armed = !armed; }
+	void SwitchEquip();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

@@ -34,13 +34,14 @@ private:
 
 	float mechScale = 2.5f;
 
-	bool chargingJump = false;
+	//bool chargingJump = false;
 	float jumpChargeTime = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
-	float maxJumpChargeTime = 0.5f;
-	float jumpMin = 0;
+	float jumpStrength = 1000;
+	//float jumpMin = 0;
 	UPROPERTY(EditDefaultsOnly, Category = jump)
-	float jumpDiff = 1000;
+	float maxJumpChargeTime = 0.5f;
+	//float jumpDiff = 1000;
 	float basePlayerMovement = 0;
 	bool moveChangeOnce = false;
 
@@ -92,7 +93,7 @@ protected:
 
 	void OnInteract();
 
-	void chargeJump();
+	//void chargeJump();
 
 	void Jump() override;
 	void StopJumping() override;

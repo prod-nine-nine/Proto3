@@ -64,7 +64,7 @@ void AMechBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
+	//jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
 
 	MI = UMaterialInstanceDynamic::Create(Mesh3P->GetMaterial(0), this);
@@ -102,7 +102,7 @@ void AMechBase::Tick(float DeltaTime)
 
 	if (jumping && jumpChargeTime + DeltaTime <= maxJumpChargeTime && canBoostJump)
 	{
-		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity/2 , false, true);
+		LaunchCharacter(GetActorUpVector() * jumpStrength , false, true);
 		jumpChargeTime += DeltaTime;
 	}
 	else if (!jumping && !(GetCharacterMovement()->IsFalling()))
@@ -229,13 +229,13 @@ void AMechBase::OnInteract()
 	}
 }
 
-void AMechBase::chargeJump()
-{
-	if (!jumpEnabled) { return; }
-	moveChangeOnce = false;
-	jumpChargeTime = 0;
-	chargingJump = true;
-}
+//void AMechBase::chargeJump()
+//{
+//	if (!jumpEnabled) { return; }
+//	moveChangeOnce = false;
+//	jumpChargeTime = 0;
+//	chargingJump = true;
+//}
 
 void AMechBase::Jump()
 {

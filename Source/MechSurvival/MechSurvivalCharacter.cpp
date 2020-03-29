@@ -87,6 +87,10 @@ void AMechSurvivalCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	baseMovement = GetCharacterMovement()->MaxWalkSpeed;
+
+	GetCharacterMovement()->MaxWalkSpeed = (armed) ? baseMovement : baseMovement * sprintMultiplier;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -287,6 +291,12 @@ void AMechSurvivalCharacter::OnInteract()
 			GetWorld()->GetFirstPlayerController()->Possess(mech);
 		}
 	}
+}
+
+void AMechSurvivalCharacter::SwitchEquip()
+{
+	armed = !armed;
+	GetCharacterMovement()->MaxWalkSpeed = (armed) ? baseMovement : baseMovement * sprintMultiplier;
 }
 
 void AMechSurvivalCharacter::MoveForward(float Value)

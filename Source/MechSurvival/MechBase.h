@@ -26,7 +26,7 @@ private:
 
 	/** Pawn mesh: outside view only seen when not them */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		USkeletalMeshComponent* Mesh3P;
+		UStaticMeshComponent* Mesh3P;
 
 	class AMechSurvivalCharacter* pilot = 0;
 
@@ -36,10 +36,10 @@ private:
 
 	//bool chargingJump = false;
 	float jumpChargeTime = 0;
-	UPROPERTY(EditDefaultsOnly, Category = jump)
+	UPROPERTY(EditAnywhere, Category = "gameplay | jump")
 	float jumpStrength = 1000;
 	//float jumpMin = 0;
-	UPROPERTY(EditDefaultsOnly, Category = jump)
+	UPROPERTY(EditAnywhere, Category = "gameplay | jump")
 	float maxJumpChargeTime = 0.5f;
 	//float jumpDiff = 1000;
 	float basePlayerMovement = 0;
@@ -47,23 +47,23 @@ private:
 
 	bool boost = false;
 	float boostTimer = 0;
-	UPROPERTY(EditDefaultsOnly, Category = boost)
+	UPROPERTY(EditAnywhere, Category = "gameplay | boost")
 	float maxBoostTime = 3.0f;
-	UPROPERTY(EditDefaultsOnly, Category = boost)
-	float boostAmount = 100;
+	UPROPERTY(EditAnywhere, Category = "gameplay | boost")
+	float boostAmount = 10000;
 
-	UPROPERTY(EditAnywhere, Category = durability)
+	UPROPERTY(EditAnywhere, Category = "gameplay | durability")
 	float maxDurability = 100;
-	UPROPERTY(EditAnywhere, Category = durability)
+	UPROPERTY(EditAnywhere, Category = "gameplay | durability")
 	float currentDurability = 0;
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
 	bool jumpEnabled = false;
-	UPROPERTY(EditAnywhere, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
 	bool gunEnabled = false;
-	UPROPERTY(EditAnywhere, Category = gameplay)
+	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
 	bool boostEnabled = false;
 
 	bool mechEnabled = true;
@@ -129,21 +129,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseLookUpRate;
 
-	/** Gun muzzle's offset from the characters location */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		FVector GunOffset;
-
 	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 		TSubclassOf<class AMechSurvivalProjectile> ProjectileClass;
 
 	/** Sound to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
 		class USoundBase* FireSound;
-
-	/** AnimMontage to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-		class UAnimMontage* FireAnimation;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -90,6 +90,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Anim)
 	bool firing = false;
 
+	UPROPERTY(BlueprintReadWrite, Category = Anim)
+	bool canShoot = false;
+
 protected:
 	
 	void OnFire();

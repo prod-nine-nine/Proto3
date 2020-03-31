@@ -79,7 +79,7 @@ void AMechSurvivalCharacter::damagePlayer(float damage)
 	health -= damage;
 	if (health < 0)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), FName("Level_Greybox"));
+		UGameplayStatics::OpenLevel(GetWorld(), restartLevel);
 	}
 }
 
@@ -289,6 +289,10 @@ void AMechSurvivalCharacter::OnInteract()
 			mech->setPilot(this);
 			SetActorEnableCollision(false);
 			GetWorld()->GetFirstPlayerController()->Possess(mech);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("Mech broken find scrap to repair"));
 		}
 	}
 }

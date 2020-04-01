@@ -42,7 +42,7 @@ AMechBase::AMechBase()
 	Mesh1P->SetRelativeLocation(FVector(-0.5f * mechScale, -4.4f * mechScale, -155.7f * mechScale));
 	Mesh1P->SetRelativeScale3D(FVector(mechScale, mechScale, mechScale));
 
-	Mesh3P = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CharacterMesh3P"));
+	Mesh3P = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh3P"));
 	Mesh3P->SetOwnerNoSee(true);
 	Mesh3P->bCastDynamicShadow = false;
 	Mesh3P->CastShadow = false;
@@ -112,7 +112,7 @@ void AMechBase::Tick(float DeltaTime)
 	{
 		LaunchCharacter(GetActorForwardVector() * boostAmount * DeltaTime, false, false);
 		boostTimer += DeltaTime;
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("booooost : %f"), boostAmount*DeltaTime));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("booooost : %f"), boostAmount*DeltaTime));
 		if (boostTimer > maxBoostTime)
 		{
 			BoostOff();

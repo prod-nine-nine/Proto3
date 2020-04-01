@@ -79,7 +79,7 @@ void AMechSurvivalCharacter::damagePlayer(float damage)
 	health -= damage;
 	if (health < 0)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), FName("Level_Greybox"));
+		UGameplayStatics::OpenLevel(GetWorld(), restartLevel);
 	}
 }
 
@@ -129,8 +129,14 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (firing && armed)
+	if (firing && canShoot)
 	{
+		LaserParticle1->Activate();
+		LaserParticle2->Activate();
+		LaserParticle3->Activate();
+		LaserParticle4->Activate();
+		LaserSparks->Activate();
+
 		const FVector ShootStart = Mesh1P->GetBoneLocation(FName("MultiTool_BF1"));
 
 		const FVector ShootEnd = ShootStart + GetControlRotation().Vector() * minerRange;
@@ -234,12 +240,6 @@ void AMechSurvivalCharacter::OnFire()
 {
 	firing = true;
 
-	LaserParticle1->SetActive(true);
-	LaserParticle2->SetActive(true);
-	LaserParticle3->SetActive(true);
-	LaserParticle4->SetActive(true);
-	LaserSparks->SetActive(true);
-
 	//// try and play the sound if specified
 	//if (FireSound != NULL)
 	//{
@@ -250,11 +250,11 @@ void AMechSurvivalCharacter::OnFire()
 void AMechSurvivalCharacter::OnFireStop()
 {
 	firing = false;
-	LaserParticle1->SetActive(false);
-	LaserParticle2->SetActive(false);
-	LaserParticle3->SetActive(false);
-	LaserParticle4->SetActive(false);
-	LaserSparks->SetActive(false);
+	LaserParticle1->Deactivate();
+	LaserParticle2->Deactivate();
+	LaserParticle3->Deactivate();
+	LaserParticle4->Deactivate();
+	LaserSparks->Deactivate();
 	LaserParticle1->SetBeamSourcePoint(0, GetActorLocation(), 0);
 	LaserParticle2->SetBeamSourcePoint(0, GetActorLocation(), 0);
 	LaserParticle3->SetBeamSourcePoint(0, GetActorLocation(), 0);
@@ -289,6 +289,10 @@ void AMechSurvivalCharacter::OnInteract()
 			mech->setPilot(this);
 			SetActorEnableCollision(false);
 			GetWorld()->GetFirstPlayerController()->Possess(mech);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("Mech broken find scrap to repair"));
 		}
 	}
 }

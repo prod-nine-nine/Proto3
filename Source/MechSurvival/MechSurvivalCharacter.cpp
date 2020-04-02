@@ -191,7 +191,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		if (ActivePlayerScan && !ActivePlayerScan->IsPlaying())
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
-			ActivePlayerScan->Play();
+			//ActivePlayerScan->Play();
 		}
 
 		if (hit.bBlockingHit)
@@ -273,7 +273,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
 		if (ActivePlayerScan && ActivePlayerScan->IsPlaying())
 		{
-			ActivePlayerScan->Stop();
+			//ActivePlayerScan->Stop();
 		}
 		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 	}
@@ -308,7 +308,7 @@ void AMechSurvivalCharacter::OnFireStop()
 	LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
 	if (ActivePlayerScan && ActivePlayerScan->IsPlaying())
 	{
-		ActivePlayerScan->Stop();
+		//ActivePlayerScan->Stop();
 	}
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 }

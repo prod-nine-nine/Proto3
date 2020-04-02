@@ -85,6 +85,9 @@ void AMechBase::BeginPlay()
 		{
 			ActiveMechDanger->Stop();
 		}
+	}
+	if (MechBoost)
+	{
 		ActiveMechBoost = UGameplayStatics::CreateSound2D(this, MechBoost);
 	}
 }
@@ -148,7 +151,7 @@ void AMechBase::Tick(float DeltaTime)
 		if (ActiveMechDanger != NULL && !ActiveMechDanger->IsPlaying())
 		{
 			//ActiveMechDanger->SetWorldLocation(GetActorLocation());
-			ActiveMechDanger->Play();
+			//ActiveMechDanger->Play();
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
 		}
 		if (pilot)
@@ -300,7 +303,7 @@ void AMechBase::BoostOn()
 	boostTimer = 0;
 	if (ActiveMechBoost != NULL && !ActiveMechBoost->IsPlaying())
 	{
-		ActiveMechBoost->Play();
+		//ActiveMechBoost->Play();
 	}
 }
 
@@ -310,7 +313,7 @@ void AMechBase::BoostOff()
 
 	if (ActiveMechBoost != NULL && ActiveMechBoost->IsPlaying())
 	{
-		ActiveMechBoost->Stop();
+		//ActiveMechBoost->Stop();
 	}
 }
 

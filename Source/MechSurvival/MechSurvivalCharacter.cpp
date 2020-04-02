@@ -113,6 +113,8 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &AMechSurvivalCharacter::SwitchEquip);
 
+	PlayerInputComponent->BindAction("Escape", IE_Pressed, this, &AMechSurvivalCharacter::OnEscape);
+
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMechSurvivalCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMechSurvivalCharacter::MoveRight);
@@ -234,6 +236,23 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
+	else if (firing && !armed)
+	{
+		//OnFireStop();
+		LaserParticle1->Deactivate();
+		LaserParticle2->Deactivate();
+		LaserParticle3->Deactivate();
+		LaserParticle4->Deactivate();
+		LaserSparks->Deactivate();
+		LaserParticle1->SetBeamSourcePoint(0, GetActorLocation(), 0);
+		LaserParticle2->SetBeamSourcePoint(0, GetActorLocation(), 0);
+		LaserParticle3->SetBeamSourcePoint(0, GetActorLocation(), 0);
+		LaserParticle4->SetBeamSourcePoint(0, GetActorLocation(), 0);
+		LaserParticle1->SetBeamEndPoint(0, GetActorLocation());
+		LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
+		LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
+		LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
+	}
 }
 
 void AMechSurvivalCharacter::OnFire()
@@ -301,6 +320,11 @@ void AMechSurvivalCharacter::SwitchEquip()
 {
 	armed = !armed;
 	GetCharacterMovement()->MaxWalkSpeed = (armed) ? baseMovement : baseMovement * sprintMultiplier;
+}
+
+void AMechSurvivalCharacter::OnEscape()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), restartLevel);
 }
 
 void AMechSurvivalCharacter::MoveForward(float Value)

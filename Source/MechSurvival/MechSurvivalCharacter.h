@@ -105,6 +105,8 @@ protected:
 
 	void SwitchEquip();
 
+	void OnEscape();
+
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
 

@@ -59,11 +59,11 @@ private:
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | attachments")
 	bool jumpEnabled = false;
-	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | attachments")
 	bool gunEnabled = false;
-	UPROPERTY(EditAnywhere, Category = "gameplay | attachments")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | attachments")
 	bool boostEnabled = false;
 
 	bool mechEnabled = true;

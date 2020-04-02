@@ -99,7 +99,7 @@ protected:
 	void StopJumping() override;
 
 	void BoostOn();
-	void BoostOff() { boost = false; }
+	void BoostOff();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -154,6 +154,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
 		class USoundBase* MechLeave;
+
+	class UAudioComponent* ActiveMechDanger = 0;
+
+	class UAudioComponent* ActiveMechBoost = 0;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

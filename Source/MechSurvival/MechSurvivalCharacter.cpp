@@ -101,7 +101,7 @@ void AMechSurvivalCharacter::BeginPlay()
 	if (PlayerScan != NULL)
 	{
 		ActivePlayerScan = UGameplayStatics::CreateSound2D(this, PlayerScan, 1.0f);
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("initalise"));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("initalise"));
 	}
 }
 
@@ -143,6 +143,7 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (firing && canShoot)
 	{
 		LaserParticle1->Activate();
@@ -189,7 +190,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 
 		if (ActivePlayerScan && !ActivePlayerScan->IsPlaying())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
 			ActivePlayerScan->Play();
 		}
 
@@ -271,7 +272,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 		LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
 		ActivePlayerScan->Stop();
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 	}
 }
 
@@ -303,7 +304,7 @@ void AMechSurvivalCharacter::OnFireStop()
 	LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 	LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
 	ActivePlayerScan->Stop();
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 }
 
 void AMechSurvivalCharacter::OnInteract()

@@ -97,12 +97,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
 		class USoundBase* MechEnter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
-		class USoundBase* PlayerHit;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
-		class USoundBase* PlayerScan;
-
 	class UAudioComponent* ActivePlayerScan = 0;
 
 protected:

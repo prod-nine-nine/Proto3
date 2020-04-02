@@ -74,7 +74,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float minerRange = 500.0f;
 
-	UPROPERTY(VisibleAnywhere, Category = Gameplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay)
 	int scrapAmount = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay)
@@ -96,6 +96,12 @@ public:
 	/** Sounds to play **/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
 		class USoundBase* MechEnter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerScan;
 
 	class UAudioComponent* ActivePlayerScan = 0;
 

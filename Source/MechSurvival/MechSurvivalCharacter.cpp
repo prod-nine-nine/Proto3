@@ -191,7 +191,7 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		if (ActivePlayerScan && !ActivePlayerScan->IsPlaying())
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
-			ActivePlayerScan->Play();
+			//ActivePlayerScan->Play();
 		}
 
 		if (hit.bBlockingHit)
@@ -271,7 +271,10 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
 		LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 		LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
-		ActivePlayerScan->Stop();
+		if (ActivePlayerScan && ActivePlayerScan->IsPlaying())
+		{
+			//ActivePlayerScan->Stop();
+		}
 		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 	}
 }
@@ -303,7 +306,10 @@ void AMechSurvivalCharacter::OnFireStop()
 	LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
 	LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 	LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
-	ActivePlayerScan->Stop();
+	if (ActivePlayerScan && ActivePlayerScan->IsPlaying())
+	{
+		//ActivePlayerScan->Stop();
+	}
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 }
 
@@ -339,7 +345,7 @@ void AMechSurvivalCharacter::OnInteract()
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("Mech broken find scrap to repair"));
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("Mech broken find scrap to repair"));
 		}
 	}
 }

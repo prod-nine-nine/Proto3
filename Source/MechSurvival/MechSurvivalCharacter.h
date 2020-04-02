@@ -81,7 +81,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Gameplay)
 	int scrapAmount = 0;
 
-	UPROPERTY(VisibleAnywhere, Category = Gameplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay)
 	TEnumAsByte<TYPE> UpgradeType = NONE;
 
 	UPROPERTY(BlueprintReadOnly, Category = Anim)
@@ -93,6 +93,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = Anim)
 	bool canShoot = false;
 
+	UPROPERTY(EditAnywhere, Category = Gameplay)
+	FName restartLevel = "";
+
 protected:
 	
 	void OnFire();
@@ -101,6 +104,8 @@ protected:
 	void OnInteract();
 
 	void SwitchEquip();
+
+	void OnEscape();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

@@ -54,10 +54,10 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "gameplay | durability")
 	float maxDurability = 100;
-	UPROPERTY(EditAnywhere, Category = "gameplay | durability")
-	float currentDurability = 0;
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "gameplay | durability")
+	float currentDurability = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | attachments")
 	bool jumpEnabled = false;

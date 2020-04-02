@@ -68,10 +68,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AMechSurvivalProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
-	class USoundBase* FireSound;
-
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float range = 200.0f;
 
@@ -95,6 +91,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	FName restartLevel = "";
+
+
+	/** Sounds to play **/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechEnter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerScan;
+
+	class UAudioComponent* ActivePlayerScan = 0;
 
 protected:
 	

@@ -76,7 +76,7 @@ public:
 	void setPilot(AMechSurvivalCharacter* newPilot) { pilot = newPilot; }
 
 	UFUNCTION(BlueprintCallable)
-		void damageMech(float damage) { currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage; }
+		void damageMech(float damage);
 
 	bool healMech(float healing) {
 		if (currentDurability == maxDurability) { return false; }
@@ -98,7 +98,7 @@ protected:
 	void Jump() override;
 	void StopJumping() override;
 
-	void BoostOn() { if (!boostEnabled) { return; } boost = true; boostTimer = 0; }
+	void BoostOn();
 	void BoostOff() { boost = false; }
 
 	/** Handles moving forward/backward */
@@ -133,9 +133,27 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 		TSubclassOf<class AMechSurvivalProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
+	/** Sounds to play */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
 		class USoundBase* FireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechBoost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechDanger;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechJump;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechJumpBoost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechLeave;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

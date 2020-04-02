@@ -81,6 +81,11 @@ void AMechSurvivalCharacter::damagePlayer(float damage)
 	{
 		UGameplayStatics::OpenLevel(GetWorld(), restartLevel);
 	}
+	// try and play the sound if specified
+	if (PlayerHit != NULL)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, PlayerHit, GetActorLocation(), 1.0f);
+	}
 }
 
 void AMechSurvivalCharacter::BeginPlay()
@@ -91,6 +96,13 @@ void AMechSurvivalCharacter::BeginPlay()
 	baseMovement = GetCharacterMovement()->MaxWalkSpeed;
 
 	GetCharacterMovement()->MaxWalkSpeed = (armed) ? baseMovement : baseMovement * sprintMultiplier;
+
+	// try and play the sound if specified
+	if (PlayerScan != NULL)
+	{
+		ActivePlayerScan = UGameplayStatics::CreateSound2D(this, PlayerScan, 1.0f);
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("initalise"));
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -131,6 +143,7 @@ void AMechSurvivalCharacter::SetupPlayerInputComponent(class UInputComponent* Pl
 void AMechSurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (firing && canShoot)
 	{
 		LaserParticle1->Activate();
@@ -174,6 +187,12 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserSparks->SetWorldRotation(FRotator(0, GetControlRotation().Yaw + 180, 0));
 
 		//DrawDebugLine(GetWorld(), ShootStart, ShootEnd, FColor::Blue, false, 10, 0, 1);
+
+		if (ActivePlayerScan && !ActivePlayerScan->IsPlaying())
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
+			ActivePlayerScan->Play();
+		}
 
 		if (hit.bBlockingHit)
 		{
@@ -252,6 +271,8 @@ void AMechSurvivalCharacter::Tick(float DeltaTime)
 		LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
 		LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 		LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
+		ActivePlayerScan->Stop();
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 	}
 }
 
@@ -282,6 +303,8 @@ void AMechSurvivalCharacter::OnFireStop()
 	LaserParticle2->SetBeamEndPoint(0, GetActorLocation());
 	LaserParticle3->SetBeamEndPoint(0, GetActorLocation());
 	LaserParticle4->SetBeamEndPoint(0, GetActorLocation());
+	ActivePlayerScan->Stop();
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
 }
 
 void AMechSurvivalCharacter::OnInteract()
@@ -308,6 +331,11 @@ void AMechSurvivalCharacter::OnInteract()
 			mech->setPilot(this);
 			SetActorEnableCollision(false);
 			GetWorld()->GetFirstPlayerController()->Possess(mech);
+			// try and play the sound if specified
+			if (MechEnter != NULL)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, MechEnter, mech->GetActorLocation(), 1.0f);
+			}
 		}
 		else
 		{

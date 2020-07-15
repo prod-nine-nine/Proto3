@@ -43,6 +43,9 @@ class AMechSurvivalCharacter : public ACharacter
 
 	float health = 100;
 
+	float baseMovement = 0;
+	float sprintMultiplier = 1.5f;
+
 public:
 	AMechSurvivalCharacter();
 
@@ -65,20 +68,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AMechSurvivalProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
-	class USoundBase* FireSound;
-
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float range = 200.0f;
 
 	UPROPERTY(EditAnywhere, Category = Gameplay)
 	float minerRange = 500.0f;
 
-	UPROPERTY(VisibleAnywhere, Category = Gameplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay)
 	int scrapAmount = 0;
 
-	UPROPERTY(VisibleAnywhere, Category = Gameplay)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay)
 	TEnumAsByte<TYPE> UpgradeType = NONE;
 
 	UPROPERTY(BlueprintReadOnly, Category = Anim)
@@ -87,6 +86,25 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Anim)
 	bool firing = false;
 
+	UPROPERTY(BlueprintReadWrite, Category = Anim)
+	bool canShoot = false;
+
+	UPROPERTY(EditAnywhere, Category = Gameplay)
+	FName restartLevel = "";
+
+
+	/** Sounds to play **/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* MechEnter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gameplay | sound")
+		class USoundBase* PlayerScan;
+
+	class UAudioComponent* ActivePlayerScan = 0;
+
 protected:
 	
 	void OnFire();
@@ -94,7 +112,9 @@ protected:
 
 	void OnInteract();
 
-	void SwitchEquip() { armed = !armed; }
+	void SwitchEquip();
+
+	void OnEscape();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

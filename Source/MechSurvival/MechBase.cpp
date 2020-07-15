@@ -42,45 +42,54 @@ AMechBase::AMechBase()
 	Mesh1P->SetRelativeLocation(FVector(-0.5f * mechScale, -4.4f * mechScale, -155.7f * mechScale));
 	Mesh1P->SetRelativeScale3D(FVector(mechScale, mechScale, mechScale));
 
-	Mesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh3P"));
+	Mesh3P = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh3P"));
 	Mesh3P->SetOwnerNoSee(true);
 	Mesh3P->bCastDynamicShadow = false;
 	Mesh3P->CastShadow = false;
 	Mesh3P->SetupAttachment(RootComponent);
 
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
-	FP_Gun->SetupAttachment(RootComponent);
-
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
+	FP_MuzzleLocation->SetupAttachment(Mesh1P);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
-
-	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 0.0f, 10.0f);
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
 	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
+}
+
+void AMechBase::damageMech(float damage)
+{
+	currentDurability = (currentDurability - damage <= 0) ? 0 : currentDurability - damage;
+	
+	if (MechHit != NULL)
+	{
+		UGameplayStatics::PlaySound2D(this, MechHit);
+	}
 }
 
 // Called when the game starts or when spawned
 void AMechBase::BeginPlay()
 {
 	Super::BeginPlay();
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 
-	jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
+	//jumpMin = GetCharacterMovement()->JumpZVelocity - jumpDiff;
 	basePlayerMovement = GetCharacterMovement()->MaxWalkSpeed;
 
 	MI = UMaterialInstanceDynamic::Create(Mesh3P->GetMaterial(0), this);
 	Mesh3P->SetMaterial(0, MI);
 
 	SpawnDefaultController();
+	if (MechDanger)
+	{
+		ActiveMechDanger = UGameplayStatics::SpawnSoundAtLocation(this, MechDanger, GetActorLocation());
+		if (ActiveMechDanger->IsPlaying())
+		{
+			ActiveMechDanger->Stop();
+		}
+	}
+	if (MechBoost)
+	{
+		ActiveMechBoost = UGameplayStatics::CreateSound2D(this, MechBoost);
+	}
 }
 
 // Called every frame
@@ -108,14 +117,18 @@ void AMechBase::Tick(float DeltaTime)
 	if (GetVelocity().Z < -10 && !canBoostJump && jumping)
 	{
 		canBoostJump = true;
+		if (MechJumpBoost != NULL)
+		{
+			UGameplayStatics::PlaySound2D(this, MechJumpBoost);
+		}
 	}
 
 	if (jumping && jumpChargeTime + DeltaTime <= maxJumpChargeTime && canBoostJump)
 	{
-		LaunchCharacter(GetActorUpVector() * GetCharacterMovement()->JumpZVelocity , false, true);
+		LaunchCharacter(GetActorUpVector() * jumpStrength , false, true);
 		jumpChargeTime += DeltaTime;
 	}
-	else if (!jumping)
+	else if (!jumping && !(GetCharacterMovement()->IsFalling()))
 	{
 		jumpChargeTime = 0;
 	}
@@ -125,6 +138,7 @@ void AMechBase::Tick(float DeltaTime)
 	{
 		LaunchCharacter(GetActorForwardVector() * boostAmount * DeltaTime, false, false);
 		boostTimer += DeltaTime;
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("booooost : %f"), boostAmount*DeltaTime));
 		if (boostTimer > maxBoostTime)
 		{
 			BoostOff();
@@ -134,6 +148,12 @@ void AMechBase::Tick(float DeltaTime)
 	if (currentDurability <= 0 && mechEnabled)
 	{
 		mechEnabled = false;
+		if (ActiveMechDanger != NULL && !ActiveMechDanger->IsPlaying())
+		{
+			//ActiveMechDanger->SetWorldLocation(GetActorLocation());
+			//ActiveMechDanger->Play();
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("play"));
+		}
 		if (pilot)
 		{
 			OnInteract();
@@ -141,6 +161,11 @@ void AMechBase::Tick(float DeltaTime)
 	}
 	else if (currentDurability > 0 && !mechEnabled)
 	{
+		if (ActiveMechDanger != NULL && ActiveMechDanger->IsPlaying())
+		{
+			ActiveMechDanger->Stop();
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("stop"));
+		}
 		mechEnabled = true;
 	}
 
@@ -197,7 +222,7 @@ void AMechBase::OnFire()
 
 			const FRotator SpawnRotation = GetControlRotation();
 			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : FVector());
 
 			//Set Spawn Collision Handling Override
 			FActorSpawnParameters ActorSpawnParams;
@@ -211,18 +236,7 @@ void AMechBase::OnFire()
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	}
-
-	// try and play a firing animation if specified
-	if (FireAnimation != NULL)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation(), 1.0f);
 	}
 }
 
@@ -236,21 +250,29 @@ void AMechBase::OnInteract()
 		GetWorld()->GetFirstPlayerController()->Possess(pilot);
 		SpawnDefaultController();
 		pilot = 0;
+		if (MechLeave != NULL)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, MechLeave, GetActorLocation(), 1.0f);
+		}
 	}
 }
 
-void AMechBase::chargeJump()
-{
-	if (!jumpEnabled) { return; }
-	moveChangeOnce = false;
-	jumpChargeTime = 0;
-	chargingJump = true;
-}
+//void AMechBase::chargeJump()
+//{
+//	if (!jumpEnabled) { return; }
+//	moveChangeOnce = false;
+//	jumpChargeTime = 0;
+//	chargingJump = true;
+//}
 
 void AMechBase::Jump()
 {
-	if (jumpEnabled)
+	if (jumpEnabled && !(GetCharacterMovement()->IsFalling()))
 	{
+		if (MechJump != NULL)
+		{
+			UGameplayStatics::PlaySound2D(this, MechJump);
+		}
 		jumping = true;
 		ACharacter::Jump();
 	}
@@ -272,6 +294,27 @@ void AMechBase::StopJumping()
 	jumping = false;
 	canBoostJump = false;
 	ACharacter::StopJumping();
+}
+
+void AMechBase::BoostOn()
+{
+	if (!boostEnabled) { return; }
+	boost = true; 
+	boostTimer = 0;
+	if (ActiveMechBoost != NULL && !ActiveMechBoost->IsPlaying())
+	{
+		//ActiveMechBoost->Play();
+	}
+}
+
+void AMechBase::BoostOff()
+{
+	boost = false;
+
+	if (ActiveMechBoost != NULL && ActiveMechBoost->IsPlaying())
+	{
+		//ActiveMechBoost->Stop();
+	}
 }
 
 void AMechBase::MoveForward(float Value)
